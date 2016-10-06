@@ -99,31 +99,10 @@ namespace Netrika.Test
         }
 
         /// <summary>
-        /// Checks adding patient with empty GUID (auth token) .
-        /// </summary>
-        [Test]
-        public void EmptyGuidTest()
-        {
-            Assert.Throws<FaultException<RequestFault>>(() =>
-            {
-                // add patient with empty GUID
-                _client.AddPatient(string.Empty, IDLPU, new PatientDto
-                {
-                    BirthDate = DateTime.Parse("07.06.1928"),
-                    DeathTime = DateTime.Parse("07.05.1920"),
-                    Sex = 1,
-                    FamilyName = "Ann",
-                    GivenName = "Smith",
-                    IdPatientMIS = Guid.NewGuid().ToString(),
-                });
-            });
-        }
-
-        /// <summary>
         /// Checks error code of adding patient with empty GUID (auth token).
         /// </summary>
         [Test]
-        public void EmptyGuidErrorCodeTest()
+        public void EmptyGuidTest()
         {
             try
             {
@@ -137,15 +116,50 @@ namespace Netrika.Test
                     GivenName = "Smith",
                     IdPatientMIS = Guid.NewGuid().ToString(),
                 });
+
+                Assert.Fail("An exception should have been thrown");
             }
             catch (FaultException<RequestFault> ex)
             {
                 // error code 1 = invalid system identification
                 Assert.AreEqual(1, ex.Detail.ErrorCode);
             }
-            catch
+            catch (Exception ex)
             {
-                Assert.Fail("Incorrect exception type.");
+                Assert.Fail(string.Format("Unexpected exception of type {0} caught: {1}",
+                           ex.GetType(), ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Checks error code of adding patient with Death date less than Birth date.
+        /// </summary>
+        [Test]
+        public void IncorrectDeathDateTest()
+        {
+            try
+            {
+                _client.AddPatient(GUID, IDLPU, new PatientDto
+                {
+                    BirthDate = DateTime.Parse("07.06.1928"),
+                    DeathTime = DateTime.Parse("07.05.1920"),
+                    Sex = 1,
+                    FamilyName = "Ann",
+                    GivenName = "Smith",
+                    IdPatientMIS = Guid.NewGuid().ToString(),
+                });
+
+                Assert.Fail("An exception should have been thrown");
+            }
+            catch (FaultException<RequestFault> ex)
+            {
+                // error code 7 = incorrect field value
+                Assert.AreEqual(7, ex.Detail.ErrorCode);
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(string.Format("Unexpected exception of type {0} caught: {1}",
+                           ex.GetType(), ex.Message));
             }
         }
 
